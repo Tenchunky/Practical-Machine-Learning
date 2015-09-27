@@ -121,7 +121,7 @@ validation.predict <- predict(modelFit, validation)
 confusionMatrix(validation.predict, validation$classe)
 ```
 
-From the confusion matrix, the model achieves 99.41% accuracy and has an out of sample error of only 0.59% (1 - accuracy). The model also performed well in sensitivity and specificity for all of the classes and achieved more than 99% except for sensitivity for Class B which is 98.62%.
+From the confusion matrix, the model achieves 99.38% accuracy and has an out of sample error (1 - accuracy) of only 0.62%. The model also performed well in sensitivity and specificity for all of the classes and achieved more than 98%.
 
 
 
