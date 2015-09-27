@@ -1,0 +1,142 @@
+---
+title: "Practical Machine Learning - Prediction Assignment"
+author: "Tenchunky"
+date: "27 September 2015"
+output: html_document
+---
+###Executive Summary
+
+The goal of this project is to create a model to predict based on data from accelerometers on the belt, forearm, arm, and dumbell whether the exercise (unilateral dumbbell biceps curl) was executed correctly or which of the common mistakes was committed. The random forest method with 6-folds cross-validation is used and found to predict with more than 99% accuracy on the validation set.
+
+
+
+###Background
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit, it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, the goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to predict whether the exercise was executed correctly (Class A) or which of the common mistakes (Class B to Class E) was committed.
+
+1. Exactly according to the specification (Class A)
+2. Throwing the elbows to the front (Class B)
+3. Lifting the dumbbell only halfway (Class C)
+4. Lowering the dumbbell only halfway (Class D)
+5. Throwing the hips to the front (Class E)
+
+More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har> 
+
+
+
+###Load Data
+
+The training data for this project are available here: <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv>
+
+The test data are available here: <https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv>
+
+The required libraries are loaded and the seed is set for reproducibility.
+
+```{r}
+# Load libraries
+library(caret)
+
+# Set seed for reproducibility
+set.seed(8872)
+
+# Download data files if they do not exist
+if(!file.exists("./pml-testing.csv")){
+     download.file(url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", 
+                   destfile = "./pml-testing.csv")
+}
+if(!file.exists("./pml-training.csv")){
+     download.file(url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", 
+                   destfile = "./pml-training.csv")
+}
+
+
+# Read data files
+pml.testing <- read.csv("./pml-testing.csv", na.strings = c('NA','#DIV/0!',''))
+pml.training <- read.csv("./pml-training.csv", na.strings = c('NA','#DIV/0!',''))
+```
+
+
+
+###Clean Data
+
+The first 7 columns are removed as they contain information that do not relate to the outcome we are trying to predict. Columns that contains missing values (in the training set) are also removed.
+
+```{r}
+# Remove first 7 columns
+pml.testing.clean <- pml.testing[,-c(1:7)]
+pml.training.clean <- pml.training[,-c(1:7)]
+
+# Remove columns that contain missing values (in training set)
+colSums.na <- colSums(is.na(pml.training.clean))
+pml.testing.clean <- pml.testing.clean[, colSums.na == 0]
+pml.training.clean <- pml.training.clean[, colSums.na == 0]
+```
+
+
+
+###Split data into training, validation and testing sets
+
+The training data is split 60/40 into training and validation sets. The testing data is retained.
+
+```{r}
+# Split to training (60%), validation (40%) and testing sets
+rows.training <- createDataPartition(y = pml.training.clean$classe, p = 0.6, list = FALSE)
+training <- pml.training.clean[rows.training,]
+validation <- pml.training.clean[-rows.training,]
+testing <- pml.testing.clean
+```
+
+
+
+###Train Model
+
+Random forests regression uses an ensemble of unpruned decision trees, each grown using a sample of the training data, and randomly selected subsets of predictor variables as candidates for splitting tree nodes. This method provides high accuracy, but has drawbacks such as speed and intrepretability.
+
+Since speed and interpretability are not concerns for this project, we can use the random forests model. Specifically, we will be using random forests model with 6-folds cross validation. Several other cross-validations were attempted and 6-folds was found to provide the highest accuracy.
+
+```{r cache=TRUE}
+# Train model (random forests)
+modelFit <- train(classe ~., data = training, method="rf", 
+                  trControl = trainControl(method = "cv", number = 6, allowParallel = TRUE))
+modelFit$finalModel
+```
+
+We then check how the model performs with the training set. 
+
+```{r}
+training.predict <- predict(modelFit, training)
+confusionMatrix(training.predict, training$classe)
+```
+
+From the confusion matrix, the model achieves 100% accuracy which may indicate overfitting.
+
+
+
+###Validate Model
+
+The model is then validated by checking how it performs with the validation set.
+
+```{r}
+validation.predict <- predict(modelFit, validation)
+confusionMatrix(validation.predict, validation$classe)
+```
+
+From the confusion matrix, the model achieves 99.41% accuracy and has an out of sample error of only 0.59% (1 - accuracy). The model also performed well in sensitivity and specificity for all of the classes and achieved more than 99% except for sensitivity for Class B which is 98.62%.
+
+
+
+###Predict Outcomes
+Lastly, the model is applied to the testing set to predict whether the exercise was executed correctly or which of the common mistakes was committed. Based on the validation results and considering that the testing set  is only of size 20, we should expect to achieve 100% accuracy.
+
+```{r}
+testing.predict <- predict(modelFit, testing)
+
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(testing.predict)
+```
