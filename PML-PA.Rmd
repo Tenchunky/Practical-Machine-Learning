@@ -6,7 +6,7 @@ output: html_document
 ---
 ###Executive Summary
 
-The goal of this project is to create a model to predict based on data from accelerometers on the belt, forearm, arm, and dumbell whether the exercise (unilateral dumbbell biceps curl) was executed correctly or which of the common mistakes was committed. The random forest method with 6-folds cross-validation is used and found to predict with more than 99% accuracy on the validation set.
+The goal of this project is to create a model to predict based on data from accelerometers on the belt, forearm, arm, and dumbell whether the exercise (unilateral dumbbell biceps curl) was executed correctly or which of the common mistakes was committed. The random forest method with 4-folds cross-validation is used and found to predict with more than 99% accuracy on the validation set.
 
 
 
@@ -32,9 +32,10 @@ The test data are available here: <https://d396qusza40orc.cloudfront.net/predmac
 
 The required libraries are loaded and the seed is set for reproducibility.
 
-```{r}
+```{r message=FALSE}
 # Load libraries
 library(caret)
+library(randomForest)
 
 # Set seed for reproducibility
 set.seed(8872)
@@ -92,12 +93,12 @@ testing <- pml.testing.clean
 
 Random forests regression uses an ensemble of unpruned decision trees, each grown using a sample of the training data, and randomly selected subsets of predictor variables as candidates for splitting tree nodes. This method provides high accuracy, but has drawbacks such as speed and intrepretability.
 
-Since speed and interpretability are not concerns for this project, we can use the random forests model. Specifically, we will be using random forests model with 6-folds cross validation. Several other cross-validations were attempted and 6-folds was found to provide the highest accuracy.
+Since speed and interpretability are not concerns for this project, we can use the random forests model. Specifically, we will be using random forests model with 4-folds cross validation. Several other cross-validations were attempted and 4-folds was found to provide the highest accuracy.
 
 ```{r cache=TRUE}
 # Train model (random forests)
 modelFit <- train(classe ~., data = training, method="rf", 
-                  trControl = trainControl(method = "cv", number = 6, allowParallel = TRUE))
+                  trControl = trainControl(method = "cv", number = 4, allowParallel = TRUE))
 modelFit$finalModel
 ```
 
@@ -121,12 +122,12 @@ validation.predict <- predict(modelFit, validation)
 confusionMatrix(validation.predict, validation$classe)
 ```
 
-From the confusion matrix, the model achieves 99.38% accuracy and has an out of sample error (1 - accuracy) of only 0.62%. The model also performed well in sensitivity and specificity for all of the classes and achieved more than 98%.
+From the confusion matrix, the model achieves 99.34% accuracy and has an out of sample error (1 - accuracy) of only 0.66%. The model also performed well in sensitivity and specificity for all of the classes and achieved more than 98%.
 
 
 
 ###Predict Outcomes
-Lastly, the model is applied to the testing set to predict whether the exercise was executed correctly or which of the common mistakes was committed. Based on the validation results and considering that the testing set  is only of size 20, we should expect to achieve 100% accuracy.
+Lastly, the model is applied to the testing set to predict whether the exercise was executed correctly or which of the common mistakes was committed. Based on the validation results and considering that the testing set  is only of size 20, we expect the model to achieve 100% accuracy.
 
 ```{r}
 testing.predict <- predict(modelFit, testing)
