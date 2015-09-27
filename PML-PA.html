@@ -231,10 +231,12 @@ confusionMatrix(validation.predict, validation$classe)</code></pre>
 </div>
 <div id="predict-outcomes" class="section level3">
 <h3>Predict Outcomes</h3>
-<p>Lastly, the model is applied to the testing set to predict whether the exercise was executed correctly or which of the common mistakes was committed. Based on the validation results and considering that the testing set is only of size 20, we expect the model to achieve 100% accuracy.</p>
+<p>Lastly, the model is applied to the testing set to predict whether the exercise was executed correctly or which of the common mistakes was committed. Based on the validation results and considering that the testing set is only of size 20, we expect the model to achieve 100% accuracy (to be verified).</p>
 <pre class="r"><code>testing.predict &lt;- predict(modelFit, testing)
-
-pml_write_files = function(x){
+testing.predict</code></pre>
+<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
+## Levels: A B C D E</code></pre>
+<pre class="r"><code>pml_write_files = function(x){
   n = length(x)
   for(i in 1:n){
     filename = paste0(&quot;problem_id_&quot;,i,&quot;.txt&quot;)
