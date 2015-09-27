@@ -138,53 +138,32 @@ testing &lt;- pml.testing.clean</code></pre>
 <p>Since speed and interpretability are not concerns for this project, we can use the random forests model. Specifically, we will be using random forests model with 6-folds cross validation. Several other cross-validations were attempted and 6-folds was found to provide the highest accuracy.</p>
 <pre class="r"><code># Train model (random forests)
 modelFit &lt;- train(classe ~., data = training, method=&quot;rf&quot;, 
-                  trControl = trainControl(method = &quot;cv&quot;, number = 6, allowParallel = TRUE,
-                                           verboseIter = TRUE))</code></pre>
+                  trControl = trainControl(method = &quot;cv&quot;, number = 6, allowParallel = TRUE))</code></pre>
 <pre><code>## Loading required package: randomForest
 ## randomForest 4.6-10
 ## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<pre><code>## + Fold1: mtry= 2 
-## - Fold1: mtry= 2 
-## + Fold1: mtry=27 
-## - Fold1: mtry=27 
-## + Fold1: mtry=52 
-## - Fold1: mtry=52 
-## + Fold2: mtry= 2 
-## - Fold2: mtry= 2 
-## + Fold2: mtry=27 
-## - Fold2: mtry=27 
-## + Fold2: mtry=52 
-## - Fold2: mtry=52 
-## + Fold3: mtry= 2 
-## - Fold3: mtry= 2 
-## + Fold3: mtry=27 
-## - Fold3: mtry=27 
-## + Fold3: mtry=52 
-## - Fold3: mtry=52 
-## + Fold4: mtry= 2 
-## - Fold4: mtry= 2 
-## + Fold4: mtry=27 
-## - Fold4: mtry=27 
-## + Fold4: mtry=52 
-## - Fold4: mtry=52 
-## + Fold5: mtry= 2 
-## - Fold5: mtry= 2 
-## + Fold5: mtry=27 
-## - Fold5: mtry=27 
-## + Fold5: mtry=52 
-## - Fold5: mtry=52 
-## + Fold6: mtry= 2 
-## - Fold6: mtry= 2 
-## + Fold6: mtry=27 
-## - Fold6: mtry=27 
-## + Fold6: mtry=52 
-## - Fold6: mtry=52 
-## Aggregating results
-## Selecting tuning parameters
-## Fitting mtry = 27 on full training set</code></pre>
+<pre class="r"><code>modelFit$finalModel</code></pre>
+<pre><code>## 
+## Call:
+##  randomForest(x = x, y = y, mtry = param$mtry) 
+##                Type of random forest: classification
+##                      Number of trees: 500
+## No. of variables tried at each split: 27
+## 
+##         OOB estimate of  error rate: 0.79%
+## Confusion matrix:
+##      A    B    C    D    E class.error
+## A 3340    5    2    0    1 0.002389486
+## B   16 2254    9    0    0 0.010969724
+## C    0    7 2040    7    0 0.006815969
+## D    0    1   30 1895    4 0.018134715
+## E    0    2    4    5 2154 0.005080831</code></pre>
 <p>We then check how the model performs with the training set.</p>
-<pre class="r"><code>training.predict &lt;- predict(modelFit, training)
-confusionMatrix(training.predict, training$classe)</code></pre>
+<pre class="r"><code>training.predict &lt;- predict(modelFit, training)</code></pre>
+<pre><code>## Loading required package: randomForest
+## randomForest 4.6-10
+## Type rfNews() to see new features/changes/bug fixes.</code></pre>
+<pre class="r"><code>confusionMatrix(training.predict, training$classe)</code></pre>
 <pre><code>## Confusion Matrix and Statistics
 ## 
 ##           Reference
@@ -254,7 +233,21 @@ confusionMatrix(validation.predict, validation$classe)</code></pre>
 ## Detection Rate         0.2841   0.1907   0.1726   0.1630   0.1834
 ## Detection Prevalence   0.2858   0.1917   0.1745   0.1644   0.1837
 ## Balanced Accuracy      0.9982   0.9921   0.9937   0.9964   0.9988</code></pre>
-<p>From the confusion matrix, the model achieves more than 99% accuracy and performed well in sensitivity and specificity for all of the classes (more than 98%).</p>
+<p>From the confusion matrix, the model achieves 99.38% accuracy and has an out of sample error (1 - accuracy) of only 0.62%. The model also performed well in sensitivity and specificity for all of the classes and achieved more than 98%.</p>
+</div>
+<div id="predict-outcomes" class="section level3">
+<h3>Predict Outcomes</h3>
+<p>Lastly, the model is applied to the testing set to predict whether the exercise was executed correctly or which of the common mistakes was committed. Based on the validation results and considering that the testing set is only of size 20, we should expect to achieve 100% accuracy.</p>
+<pre class="r"><code>testing.predict &lt;- predict(modelFit, testing)
+
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0(&quot;problem_id_&quot;,i,&quot;.txt&quot;)
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(testing.predict)</code></pre>
 </div>
 
 
